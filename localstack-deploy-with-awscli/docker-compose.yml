@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"  # LocalStack Gateway
+      - "4571:4571"  # DynamoDB
+      - "4572:4572"  # S3
+      - "4574:4574"  # Lambda
+      - "4575:4575"  # API Gateway
+    environment:
+      - SERVICES=dynamodb,s3,lambda,apigateway
+      - DEBUG=1
+    volumes:
+      - "./localstack:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
