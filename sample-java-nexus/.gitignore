@@ -1,0 +1,5 @@
+.gradle/
+build/
+vendor/legacy-greeter/build/
+.idea/
+*.iml

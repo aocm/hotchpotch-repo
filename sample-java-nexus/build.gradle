@@ -1,0 +1,80 @@
+plugins {
+    id 'application'
+    id 'maven-publish'
+}
+
+group = 'com.example.app'
+version = '1.0.0'
+
+def nexusBaseUrl = providers.gradleProperty('nexusBaseUrl')
+    .orElse(providers.environmentVariable('NEXUS_BASE_URL'))
+    .orElse('http://nexus:8081')
+    .get()
+
+def nexusUsername = providers.gradleProperty('nexusUsername')
+    .orElse(providers.environmentVariable('NEXUS_USERNAME'))
+    .orElse('admin')
+    .get()
+
+def nexusPassword = providers.gradleProperty('nexusPassword')
+    .orElse(providers.environmentVariable('NEXUS_PASSWORD'))
+    .orElse('admin123')
+    .get()
+
+def nexusRepositoryName = providers.gradleProperty('nexusRepositoryName')
+    .orElse(providers.environmentVariable('NEXUS_REPOSITORY_NAME'))
+    .orElse('legacy-maven-hosted')
+    .get()
+
+repositories {
+    maven {
+        url = uri("${nexusBaseUrl}/repository/${nexusRepositoryName}/")
+        allowInsecureProtocol = true
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+application {
+    mainClass = 'com.example.app.Main'
+}
+
+dependencies {
+    implementation 'com.example.legacy:legacy-greeter:1.0.0'
+}
+
+tasks.named('jar') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes('Main-Class': application.mainClass.get())
+    }
+    from {
+        configurations.runtimeClasspath.collect { file ->
+            file.isDirectory() ? file : zipTree(file)
+        }
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = 'sample-java-nexus-app'
+        }
+    }
+    repositories {
+        maven {
+            url = uri("${nexusBaseUrl}/repository/${nexusRepositoryName}/")
+            allowInsecureProtocol = true
+            credentials {
+                username = nexusUsername
+                password = nexusPassword
+            }
+        }
+    }
+}

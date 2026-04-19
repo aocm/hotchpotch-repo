@@ -1,0 +1,56 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'com.example.legacy'
+version = '1.0.0'
+
+def nexusBaseUrl = providers.gradleProperty('nexusBaseUrl')
+    .orElse(providers.environmentVariable('NEXUS_BASE_URL'))
+    .orElse('http://nexus:8081')
+    .get()
+
+def nexusUsername = providers.gradleProperty('nexusUsername')
+    .orElse(providers.environmentVariable('NEXUS_USERNAME'))
+    .orElse('admin')
+    .get()
+
+def nexusPassword = providers.gradleProperty('nexusPassword')
+    .orElse(providers.environmentVariable('NEXUS_PASSWORD'))
+    .orElse('admin123')
+    .get()
+
+def nexusRepositoryName = providers.gradleProperty('nexusRepositoryName')
+    .orElse(providers.environmentVariable('NEXUS_REPOSITORY_NAME'))
+    .orElse('legacy-maven-hosted')
+    .get()
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = 'legacy-greeter'
+        }
+    }
+    repositories {
+        maven {
+            url = uri("${nexusBaseUrl}/repository/${nexusRepositoryName}/")
+            allowInsecureProtocol = true
+            credentials {
+                username = nexusUsername
+                password = nexusPassword
+            }
+        }
+    }
+}
